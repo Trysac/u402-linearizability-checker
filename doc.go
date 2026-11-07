@@ -1,5 +1,6 @@
-// Package linearizabilitychecker is a small, dependency-free Go library: Deterministic linearizability checker for concurrent execution histories using Wing and Gong search with Lowe pruning, key partitioning, and minimal counterexample generation.
-//
-// The public API is every exported identifier of this root package. Functions are pure: they do
-// no I/O, keep no global mutable state and report invalid input through returned errors.
+// Package linearizabilitychecker provides a deterministic linearizability
+// checker for concurrent execution histories. It implements the Wing-Gong
+// algorithm augmented with Lowe state-set pruning memoization, concurrent
+// key-based partitioning, minimal counterexample search, Jepsen-compatible
+// EDN parsing, and standard data structure models.
 package linearizabilitychecker

@@ -9,4 +9,5 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Add linearizability checker with Wing-Gong search, Lowe state-set pruning, and EDN/JSON parsers.
 - Initial project structure from the factory utility template.
