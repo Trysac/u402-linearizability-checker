@@ -15,8 +15,7 @@ caller code --> package linearizabilitychecker (repository root)
 
 - **Public API**: every exported identifier of the root package. Unexported identifiers and
   `internal/` packages may change without a major version.
-- **Errors**: invalid input returns an error; exported sentinel errors (such as `ErrBlank`) let
-  callers branch with `errors.Is`. The library never panics on input, prints or exits.
+- **Errors**: invalid input returns an error; typed `CheckerError` errors (with codes such as `'history_too_large'`, `'search_cancelled'`, `'invalid_history_sequence'`, `'edn_parse_error'`, `'input_too_large'`, `'depth_limit_exceeded'`) let callers inspect error codes. The library never panics on input, prints or exits.
 - **Side effects**: none. If a feature needs I/O, accept an interface (`io.Reader` or a small
   custom one) instead of opening resources, and record the choice in an ADR.
 

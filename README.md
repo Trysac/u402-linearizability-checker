@@ -8,8 +8,7 @@ Deterministic linearizability checker for concurrent execution histories using W
 
 ## Problem
 
-Describe in two or three sentences the concrete problem this utility solves, who hits it, and what
-they do today without it. Replace this paragraph when the first real feature lands.
+Distributed systems engineers and test authors need to verify whether concurrent execution logs uphold strict linearizability. Without automated verification, subtle concurrency bugs such as stale reads or dropped writes escape unit tests and produce irreproducible production incidents. An embeddable zero-dependency checker provides fast, deterministic verdicts and minimal counterexample traces directly in local test suites and CI pipelines.
 
 ## Install
 
@@ -17,39 +16,44 @@ they do today without it. Replace this paragraph when the first real feature lan
 go get github.com/Trysac/u402-linearizability-checker
 ```
 
-Requires Go 1.23 or newer. No dependencies outside the standard library.
+Requires Go 1.23 or newer. This library uses only the Go standard library.
 
 ## Usage
 
 ```go
-package main
-
-import (
-	"errors"
-	"fmt"
-
-	"github.com/Trysac/u402-linearizability-checker"
-)
+import "github.com/Trysac/u402-linearizability-checker"
 
 func main() {
-	// Normalize trims surrounding whitespace and lower-cases the text.
-	out, _ := linearizabilitychecker.Normalize("  Hello World ")
-	fmt.Println(out) // -> "hello world"
-
-	// Blank input is rejected explicitly instead of returning an empty string.
-	if _, err := linearizabilitychecker.Normalize("   "); errors.Is(err, linearizabilitychecker.ErrBlank) {
-		fmt.Println("rejected:", err)
-	}
+    history := []linearizabilitychecker.Op{ /* ... */ }
+    res, err := linearizabilitychecker.Check(context.Background(), linearizabilitychecker.RegisterModel(), history, linearizabilitychecker.Options{})
+    if err != nil {
+        log.Fatal(err)
+    }
+    if !res.Ok {
+        log.Printf("Non-linearizable trace! Minimal ops: %d", len(res.Counterexample.MinimalHistory))
+    }
 }
 ```
 
-## Documentation
+## Public API Summary
 
-- [Architecture](docs/ARCHITECTURE.md) and [decisions](docs/decisions/)
-- [Testing](docs/TESTING.md) and [security](docs/SECURITY.md)
-- [Project record](docs/PROJECT.md) and [stack](docs/STACK.md)
-- [Changelog](CHANGELOG.md) and [contributing guide](CONTRIBUTING.md)
+- `Check[S any](ctx context.Context, model Model[S], history []Op, opts Options) (Result, error)`
+- `ParseEDNHistory(r io.Reader, maxBytes int64) ([]Op, error)`
+- `ParseJSONHistory(r io.Reader, maxBytes int64) ([]Op, error)`
+- `RenderHTMLReport(w io.Writer, report *Report) error`
 
-## License
+### Limits
+- Default MaxHistoryOps: 50,000 (exceeding returns `history_too_large`).
+- MaxStates (Lowe pruning cache): 1,000,000 (exceeding returns `depth_limit_exceeded`).
+- Max EDN/JSON payload: 10 MB.
 
-[MIT](LICENSE) (c) 2026 Miguel Gomez
+### Errors
+`CheckerError` codes: `history_too_large`, `search_cancelled`, `invalid_history_sequence`, `edn_parse_error`, `input_too_large`, `depth_limit_exceeded`.
+
+## Why not Porcupine?
+
+Existing Go checkers like Porcupine implement W&G without native support for indeterminate ':info' Jepsen crash semantics or clean separation for zero-dependency test assertion. This library requires zero third-party runtime dependencies and bounds memory with `MaxStates`.
+
+## Security
+
+See [docs/SECURITY.md](docs/SECURITY.md).
